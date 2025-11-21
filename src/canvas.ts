@@ -50,13 +50,22 @@ function renderBox(position: RectPosition, size: RectSize) {
   ctx.save();
 
   // Rect
-  ctx.fillStyle = "#cf1322";
+  const gradient = ctx.createLinearGradient(
+    position.x,
+    position.y,
+    position.x + size.width,
+    position.y
+  );
+
+  gradient.addColorStop(0, "#531dab");
+  gradient.addColorStop(1, "#c41d7f");
+  ctx.fillStyle = gradient;
   ctx.fillRect(position.x, position.y, size.width, size.height);
 
   // Border
   ctx.setLineDash([10, 5]);
   ctx.lineWidth = 5;
-  ctx.strokeStyle = "#1d39c4";
+  ctx.strokeStyle = "#36cfc9";
 
   ctx.beginPath();
   // Top Left
