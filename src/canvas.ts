@@ -65,7 +65,7 @@ function renderBox(position: RectPosition, size: RectSize) {
   // Border
   ctx.setLineDash([10, 5]);
   ctx.lineWidth = 5;
-  ctx.strokeStyle = "#36cfc9";
+  ctx.strokeStyle = "#d3f261";
 
   ctx.beginPath();
   // Top Left
