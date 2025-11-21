@@ -41,7 +41,7 @@ cleanCanvas();
  */
 
 const box = {
-  count: 50,
+  count: 10,
   width: 50,
   height: 50,
 };
@@ -65,7 +65,7 @@ function renderBox(position: RectPosition, size: RectSize) {
   // Border
   ctx.setLineDash([10, 5]);
   ctx.lineWidth = 5;
-  ctx.strokeStyle = "#d3f261";
+  ctx.strokeStyle = "#ffa39e";
 
   ctx.beginPath();
   // Top Left
@@ -110,11 +110,11 @@ window.addEventListener("pointermove", onPointerMove);
 
 function render() {
   // Update
-  accelerationY += (target.y - translateY) * 0.2;
+  accelerationY += (target.y - translateY) * 0.5;
   accelerationY *= 0.15;
   translateY += accelerationY;
 
-  accelerationX += (target.x - translateX) * 0.2;
+  accelerationX += (target.x - translateX) * 0.5;
   accelerationX *= 0.15;
   translateX += accelerationX;
 
