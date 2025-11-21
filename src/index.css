@@ -15,5 +15,5 @@ body {
   height: 50px;
   box-sizing: border-box;
   border: 3px dashed sandybrown;
-  background-image: linear-gradient(to right, red, blue);
+  background-image: linear-gradient(to top right, #8a2be2, #7fff00);
 }

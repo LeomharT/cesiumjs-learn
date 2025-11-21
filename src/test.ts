@@ -49,8 +49,8 @@ function loopRender() {
 
   boxEl.forEach((el, index) => {
     const target = {
-      x: positions[index].x,
-      y: positions[index].y,
+      x: positions[positions.length - (index + 1)].x,
+      y: positions[positions.length - (index + 1)].y,
     };
 
     el.style.top = target.y - 25 + "px";
