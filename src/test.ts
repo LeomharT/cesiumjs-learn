@@ -2,7 +2,7 @@ import "./index.css";
 
 const root = document.querySelector("#root") as HTMLDivElement;
 
-for (let i = 0; i < 50; i++) {
+for (let i = 0; i < 10; i++) {
   const box = document.createElement("div");
   box.classList.add("box");
   root.append(box);
@@ -53,8 +53,9 @@ function loopRender() {
       y: positions[positions.length - (index + 1)].y,
     };
 
-    el.style.top = target.y - 25 + "px";
-    el.style.left = target.x - 25 + "px";
+    el.style.transform = `translate(
+    ${target.x - 25 + "px"}, 
+    ${target.y - 25 + "px"})`;
   });
 
   //Animation
