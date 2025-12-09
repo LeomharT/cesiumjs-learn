@@ -41,7 +41,7 @@ cleanCanvas();
  */
 
 const box = {
-  count: 10,
+  count: 30,
   width: 50,
   height: 50,
 };
