@@ -38,6 +38,11 @@ let translateX = 0;
 let accelerationY = 0;
 let translateY = 0;
 
+const positions = Array.from({ length: box.count }, () => ({
+  x: 0,
+  y: 0,
+}));
+
 /**
  * Document Object Module
  */
@@ -62,7 +67,7 @@ function cleanScene() {
   ctx.fillRect(0, 0, sizes.width, sizes.height);
 }
 
-function drawBox(position: Position, size: Size) {
+function drawBox(position: Position, size: Size, time: number) {
   const fixed = {
     x: position.x - size.width / 2.0,
     y: position.y - size.height / 2.0,
@@ -72,6 +77,12 @@ function drawBox(position: Position, size: Size) {
 
   ctx.fillStyle = "#F9DFDF";
   ctx.fillRect(fixed.x, fixed.y, size.width, size.height);
+
+  ctx.strokeStyle = "#001BB7";
+  ctx.setLineDash([10, 5]);
+  ctx.lineDashOffset = -time * 0.05;
+  ctx.lineWidth = 5;
+  ctx.strokeRect(fixed.x, fixed.y, size.width, size.height);
 
   ctx.restore();
 }
@@ -94,31 +105,34 @@ const fpsGraph: any = pane.addBlade({
  * Event
  */
 
-function render() {
+function render(time: number = 0) {
   fpsGraph.begin();
 
   // Update
-  accelerationY += (cursor.y - translateY) * 0.002;
-  accelerationY *= 0.95;
+  accelerationY += (cursor.y - translateY) * 0.5;
+  accelerationY *= 0.15;
   translateY += accelerationY;
 
-  accelerationX += (cursor.x - translateX) * 0.002;
-  accelerationX *= 0.95;
+  accelerationX += (cursor.x - translateX) * 0.5;
+  accelerationX *= 0.15;
   translateX += accelerationX;
+
+  positions.pop();
+  positions.unshift({
+    x: translateX,
+    y: translateY,
+  });
 
   // Render
   cleanScene();
 
-  drawBox(
-    {
-      x: translateX,
-      y: translateY,
-    },
-    {
-      width: box.hx,
-      height: box.hy,
-    }
-  );
+  for (let i = 0; i < box.count; i++) {
+    drawBox(
+      positions[positions.length - 1 - i],
+      { width: box.hx, height: box.hy },
+      time
+    );
+  }
 
   // Animation
   requestAnimationFrame(render);
