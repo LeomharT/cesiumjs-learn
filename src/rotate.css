@@ -8,17 +8,14 @@ body {
   height: 100vh;
   background-color: #1e1e1e;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
 }
 
-.box {
-  width: 250px;
-  height: 200px;
-  font-size: 150px;
-  border: 1px dashed aqua;
-  text-align: center;
-  line-height: 200px;
-  user-select: none;
+.rect {
+  position: absolute;
+  background-color: #c41d7f;
+  width: 20px;
+  height: 20px;
+  box-sizing: content-box;
+  border: 5px solid #531dab;
 }
