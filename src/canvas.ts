@@ -1,3 +1,4 @@
+import { Pane } from "tweakpane";
 import "./canvas.css";
 
 type Position = {
@@ -36,9 +37,6 @@ const pointer = {
   y: 0,
 };
 
-let radius = 50;
-let acceleration = false;
-
 function cleanScene() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
@@ -46,57 +44,57 @@ function cleanScene() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.restore();
 }
+cleanScene();
 
-function rotateAroundCursor(time: number, radius: number = 50) {
-  time *= 0.001;
+const params = {
+  frequency: 0.05,
+};
 
+const lastCoord = {
+  x: 0,
+  y: window.innerHeight / 2.0,
+};
+
+function renderCosLine(time: number) {
   ctx.save();
-  ctx.fillStyle = "#36cfc9";
 
-  ctx.setLineDash([5, 5]);
-  ctx.strokeStyle = "#d3adf7";
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = "#531dab";
 
-  for (let i = 0; i < 50; i++) {
-    const position = {
-      x: Math.cos(i + time) * radius,
-      y: Math.sin(i + time) * radius,
-    };
+  const centerY = window.innerHeight / 2.0;
 
-    const size = radius / 4;
+  ctx.beginPath();
 
-    ctx.fillRect(
-      pointer.x - size / 2 + position.x,
-      pointer.y - size / 2 + position.y,
-      size,
-      size
-    );
-    ctx.strokeRect(
-      pointer.x - size / 2 + position.x,
-      pointer.y - size / 2 + position.y,
-      size,
-      size
-    );
-  }
+  const progress = time * 0.1;
 
+  const y = Math.cos(progress * params.frequency) * 100 + centerY;
+
+  ctx.moveTo(lastCoord.x, lastCoord.y);
+  ctx.lineTo(progress, y);
+
+  ctx.stroke();
   ctx.restore();
+
+  lastCoord.x = progress;
+  lastCoord.y = y;
 }
 
+const pane = new Pane({ title: "Debug Params" });
+pane.element.parentElement!.style.width = "380px";
+pane
+  .addBinding(params, "frequency", {
+    min: 0,
+    max: 0.1,
+    step: 0.001,
+  })
+  .on("change", () => {
+    cleanScene();
+    ctx.moveTo(lastCoord.x, lastCoord.y);
+    renderCosLine(0.0);
+  });
+
 function render(time: number = 0) {
-  cleanScene();
-
-  if (acceleration) {
-    radius += 15.0;
-  } else {
-    radius -= 15.0;
-  }
-
-  radius = Math.max(50, radius);
-  radius = Math.min(300, radius);
-
-  console.log(radius);
-
-  rotateAroundCursor(time, radius);
+  renderCosLine(time);
 
   // Animation
   requestAnimationFrame(render);
@@ -119,11 +117,4 @@ window.addEventListener("resize", () => {
 window.addEventListener("pointermove", (e) => {
   pointer.x = e.clientX;
   pointer.y = e.clientY;
-});
-
-window.addEventListener("pointerdown", () => {
-  acceleration = true;
-});
-window.addEventListener("pointerup", () => {
-  acceleration = false;
 });
