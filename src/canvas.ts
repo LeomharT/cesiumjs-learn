@@ -63,13 +63,10 @@ function renderCosLine(time: number) {
 
   const centerY = window.innerHeight / 2.0;
 
-  ctx.beginPath();
-
   const progress = time * 0.1;
 
   const y = Math.cos(progress * params.frequency) * 100 + centerY;
 
-  ctx.moveTo(lastCoord.x, lastCoord.y);
   ctx.lineTo(progress, y);
 
   ctx.stroke();
