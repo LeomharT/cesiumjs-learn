@@ -1,4 +1,3 @@
-import { Pane } from "tweakpane";
 import "./canvas.css";
 
 type Position = {
@@ -37,6 +36,30 @@ const pointer = {
   y: 0,
 };
 
+const position = {
+  x: 0,
+  y: 0,
+};
+
+const COLORS = [
+  "#1d39c4",
+  "#531dab",
+  "#c41d7f",
+  "#0958d9",
+  "#08979c",
+  "#389e0d",
+  "#d4380d",
+  "#cf1322",
+  "#d46b08",
+  "#7cb305",
+  "#d48806",
+  "#ffec3d",
+];
+
+function randomColor() {
+  return COLORS[Math.ceil(Math.random() * COLORS.length - 1)];
+}
+
 function cleanScene() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
@@ -46,52 +69,61 @@ function cleanScene() {
 }
 cleanScene();
 
-const params = {
-  frequency: 0.05,
-};
+const colorArr = Array.from({ length: 50 }, () => [
+  randomColor(),
+  randomColor(),
+]);
 
-const lastCoord = {
-  x: 0,
-  y: window.innerHeight / 2.0,
-};
+const positionArr = Array.from({ length: 50 }, () => ({ x: 0, y: 0 }));
 
-function renderCosLine(time: number) {
+function renderRect(time: number) {
   ctx.save();
 
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = "#531dab";
+  for (let i = 0; i < 50; i++) {
+    const center = {
+      x: positionArr[positionArr.length - 1 - i].x - 25,
+      y: positionArr[positionArr.length - 1 - i].y - 25,
+    };
+    ctx.fillStyle = colorArr[i][0];
+    ctx.fillRect(center.x, center.y, 50, 50);
 
-  const centerY = window.innerHeight / 2.0;
+    ctx.strokeStyle = colorArr[i][1];
+    ctx.lineWidth = 4;
+    ctx.lineDashOffset = -time * 0.01;
+    ctx.setLineDash([6, 3]);
+    ctx.strokeRect(center.x, center.y, 50, 50);
+  }
 
-  const progress = time * 0.1;
-
-  const y = Math.cos(progress * params.frequency) * 100 + centerY;
-
-  ctx.lineTo(progress, y);
-
-  ctx.stroke();
   ctx.restore();
-
-  lastCoord.x = progress;
-  lastCoord.y = y;
 }
 
-const pane = new Pane({ title: "Debug Params" });
-pane.element.parentElement!.style.width = "380px";
-pane
-  .addBinding(params, "frequency", {
-    min: 0,
-    max: 0.1,
-    step: 0.001,
-  })
-  .on("change", () => {
-    cleanScene();
-    ctx.moveTo(lastCoord.x, lastCoord.y);
-    renderCosLine(0.0);
-  });
+let translateX = 0;
+let accelerationX = 0;
+
+let translateY = 0;
+let accelerationY = 0;
 
 function render(time: number = 0) {
-  renderCosLine(time);
+  // Reset canvas
+  cleanScene();
+
+  // Update
+  accelerationX += (pointer.x - translateX) * 0.002;
+  accelerationX *= 0.95;
+  translateX += accelerationX;
+
+  accelerationY += (pointer.y - translateY) * 0.002;
+  accelerationY *= 0.95;
+  translateY += accelerationY;
+
+  position.x = translateX;
+  position.y = translateY;
+
+  positionArr.pop();
+  positionArr.unshift({ ...position });
+
+  // Render scene
+  renderRect(time);
 
   // Animation
   requestAnimationFrame(render);
