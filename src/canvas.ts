@@ -77,9 +77,9 @@ const colorArr = Array.from({ length: 50 }, () => [
 const positionArr = Array.from({ length: 50 }, () => ({ x: 0, y: 0 }));
 
 function renderRect(time: number) {
-  ctx.save();
-
   for (let i = 0; i < 50; i++) {
+    ctx.save();
+
     const center = {
       x: positionArr[positionArr.length - 1 - i].x - 25,
       y: positionArr[positionArr.length - 1 - i].y - 25,
@@ -92,9 +92,9 @@ function renderRect(time: number) {
     ctx.lineDashOffset = -time * 0.01;
     ctx.setLineDash([6, 3]);
     ctx.strokeRect(center.x, center.y, 50, 50);
-  }
 
-  ctx.restore();
+    ctx.restore();
+  }
 }
 
 let translateX = 0;
