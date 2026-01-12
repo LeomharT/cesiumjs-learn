@@ -1,129 +1,161 @@
 import "./canvas.css";
+import { fs, vs } from "./penger";
 
-type Position = {
+/**
+ * (x, y, z)
+ *
+ * x' = x / z
+ * y' = y / z
+ */
+
+type Vector2 = {
   x: number;
   y: number;
 };
-type Size = {
-  width: number;
-  height: number;
-};
 
-/**
- * Variables
- */
+type Vector3 = Vector2 & {
+  z: number;
+};
 
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
-  pixelRatio: Math.min(2.0, window.devicePixelRatio),
+  pixelRadio: Math.min(2.0, window.devicePixelRatio),
+  aspect: window.innerWidth / window.innerHeight,
 };
 
-const canvas: HTMLCanvasElement = document.createElement("canvas");
-canvas.width = sizes.width * sizes.pixelRatio;
-canvas.height = sizes.height * sizes.pixelRatio;
+const canvas = document.createElement("canvas");
 canvas.style.width = sizes.width + "px";
 canvas.style.height = sizes.height + "px";
+canvas.width = sizes.width * devicePixelRatio;
+canvas.height = sizes.height * devicePixelRatio;
 
 const el = document.querySelector("#root");
 el?.append(canvas);
 
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-ctx.scale(sizes.pixelRatio, sizes.pixelRatio);
+ctx.scale(sizes.pixelRadio, sizes.pixelRadio);
 
-const pointer = {
-  x: 0,
-  y: 0,
-};
-
-const position = {
-  x: 0,
-  y: 0,
-};
-
-const COLORS = [
-  "#1d39c4",
-  "#531dab",
-  "#c41d7f",
-  "#0958d9",
-  "#08979c",
-  "#389e0d",
-  "#d4380d",
-  "#cf1322",
-  "#d46b08",
-  "#7cb305",
-  "#d48806",
-  "#ffec3d",
-];
-
-function randomColor() {
-  return COLORS[Math.ceil(Math.random() * COLORS.length - 1)];
-}
-
-function cleanScene() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function clear() {
   ctx.save();
   ctx.fillStyle = "#1e1e1e";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, sizes.width, sizes.height);
   ctx.restore();
 }
-cleanScene();
+clear();
 
-const colorArr = Array.from({ length: 50 }, () => [
-  randomColor(),
-  randomColor(),
-]);
+function point(p: Vector2) {
+  ctx.save();
+  const size = 20;
 
-const positionArr = Array.from({ length: 50 }, () => ({ x: 0, y: 0 }));
+  ctx.fillStyle = "#d4380d";
+  ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
 
-function renderRect(time: number) {
-  for (let i = 0; i < 50; i++) {
-    ctx.save();
-
-    const center = {
-      x: positionArr[positionArr.length - 1 - i].x - 25,
-      y: positionArr[positionArr.length - 1 - i].y - 25,
-    };
-    ctx.fillStyle = colorArr[i][0];
-    ctx.fillRect(center.x, center.y, 50, 50);
-
-    ctx.strokeStyle = colorArr[i][1];
-    ctx.lineWidth = 4;
-    ctx.lineDashOffset = -time * 0.01;
-    ctx.setLineDash([6, 3]);
-    ctx.strokeRect(center.x, center.y, 50, 50);
-
-    ctx.restore();
-  }
+  ctx.restore();
 }
 
-let translateX = 0;
-let accelerationX = 0;
+function screen(p: Vector2) {
+  // const x = (p.x / sizes.width) * 2.0 - 1.0;
+  const x = ((p.x + 1.0) / 2.0) * sizes.width;
+  const y = -((p.y - 1.0) / 2.0) * sizes.height;
 
-let translateY = 0;
-let accelerationY = 0;
+  return {
+    x,
+    y,
+  };
+}
+
+function project(p: Vector3) {
+  return {
+    x: p.x / p.z,
+    y: (p.y / p.z) * sizes.aspect,
+  };
+}
+
+function translateZ(p: Vector3, dz: number) {
+  return {
+    x: p.x,
+    y: p.y,
+    z: p.z + dz,
+  };
+}
+
+function line(from: Vector2, to: Vector2) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#d4380d";
+  ctx.stroke();
+  ctx.restore();
+}
+
+function rotate(p: Vector3, angle: number) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+
+  const x = p.x * c - p.z * s;
+  const z = p.x * s + p.z * c;
+
+  return {
+    x,
+    y: p.y,
+    z,
+  };
+}
+
+const _ps = vs ?? [
+  { x: 0.25, y: 0.25, z: 0.25 },
+  { x: -0.25, y: 0.25, z: 0.25 },
+  { x: -0.25, y: -0.25, z: 0.25 },
+  { x: 0.25, y: -0.25, z: 0.25 },
+
+  { x: 0.25, y: 0.25, z: -0.25 },
+  { x: -0.25, y: 0.25, z: -0.25 },
+  { x: -0.25, y: -0.25, z: -0.25 },
+  { x: 0.25, y: -0.25, z: -0.25 },
+];
+
+const _fs = fs ?? [
+  [0, 1, 2, 3],
+  [4, 5, 6, 7],
+  [0, 4],
+  [1, 5],
+  [2, 6],
+  [3, 7],
+];
+
+let prevTime = 0;
+let dz = 1.25;
+let angle = 0;
 
 function render(time: number = 0) {
-  // Reset canvas
-  cleanScene();
+  clear();
 
-  // Update
-  accelerationX += (pointer.x - translateX) * 0.002;
-  accelerationX *= 0.95;
-  translateX += accelerationX;
+  let dt = time - prevTime;
+  dt /= 1000;
+  prevTime = time;
 
-  accelerationY += (pointer.y - translateY) * 0.002;
-  accelerationY *= 0.95;
-  translateY += accelerationY;
+  // dz += dt;
 
-  position.x = translateX;
-  position.y = translateY;
+  angle += -dt;
 
-  positionArr.pop();
-  positionArr.unshift({ ...position });
+  for (const p of _ps) {
+    // point(screen(project(translateZ(rotate(p, angle), dz))));
+  }
 
-  // Render scene
-  renderRect(time);
+  for (const f of fs) {
+    for (let i = 0; i < f.length; i++) {
+      const a = _ps[f[i]];
+      const b = _ps[f[(i + 1) % f.length]];
+
+      line(
+        screen(project(translateZ(rotate(a, angle), dz))),
+        screen(project(translateZ(rotate(b, angle), dz)))
+      );
+    }
+  }
 
   // Animation
   requestAnimationFrame(render);
@@ -131,19 +163,15 @@ function render(time: number = 0) {
 
 render();
 
-window.addEventListener("resize", () => {
+function resize() {
   sizes.width = window.innerWidth;
   sizes.height = window.innerHeight;
 
-  canvas.width = sizes.width * sizes.pixelRatio;
-  canvas.height = sizes.height * sizes.pixelRatio;
   canvas.style.width = sizes.width + "px";
   canvas.style.height = sizes.height + "px";
+  canvas.width = sizes.width * devicePixelRatio;
+  canvas.height = sizes.height * devicePixelRatio;
 
-  cleanScene();
-});
-
-window.addEventListener("pointermove", (e) => {
-  pointer.x = e.clientX;
-  pointer.y = e.clientY;
-});
+  ctx.scale(sizes.pixelRadio, sizes.pixelRadio);
+}
+window.addEventListener("resize", resize);
