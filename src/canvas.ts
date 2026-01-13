@@ -1,4 +1,5 @@
 import "./canvas.css";
+import { fs, vs } from "./penger";
 
 type Vector2 = {
   x: number;
@@ -38,7 +39,7 @@ clean();
 function point(p: Vector2) {
   ctx.save();
   ctx.fillStyle = "#c41d7f";
-  const s = 20;
+  const s = 10;
   ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
   ctx.restore();
 }
@@ -70,7 +71,7 @@ function translateZ(p: Vector3, dz: number) {
 function line(from: Vector2, to: Vector2) {
   ctx.save();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = "#c41d7f";
+  ctx.strokeStyle = "#531dab";
   ctx.beginPath();
   ctx.moveTo(from.x, from.y);
   ctx.lineTo(to.x, to.y);
@@ -92,7 +93,7 @@ function rotate(p: Vector3, angle: number) {
   };
 }
 
-const _vs = [
+const _vs = vs ?? [
   { x: 0.25, y: 0.25, z: 0.25 },
   { x: -0.25, y: 0.25, z: 0.25 },
   { x: -0.25, y: -0.25, z: 0.25 },
@@ -104,7 +105,7 @@ const _vs = [
   { x: 0.25, y: -0.25, z: -0.25 },
 ];
 
-const _fs = [
+const _fs = fs ?? [
   [0, 1, 2, 3],
   [4, 5, 6, 7],
   [0, 4],
@@ -116,7 +117,7 @@ const _fs = [
 let prevTime = 0;
 let dt = 0;
 
-let dz = 1;
+let dz = 1.5;
 let angle = 0;
 
 function render(time: number = 0) {
