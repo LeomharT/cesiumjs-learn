@@ -1,156 +1,70 @@
-/**
- * (x, y, z)
- *
- * x' = x / z
- * y' = y / z
- */
-
+import {
+  Color,
+  Mesh,
+  PerspectiveCamera,
+  PlaneGeometry,
+  Scene,
+  ShaderMaterial,
+  Uniform,
+  WebGLRenderer,
+} from "three";
+import { Pane } from "tweakpane";
 import "./canvas.css";
-import { fs, vs } from "./penger";
-
-type Vector2 = {
-  x: number;
-  y: number;
-};
-
-type Vector3 = Vector2 & {
-  z: number;
-};
+import fragmentShader from "./shader/rotate/fragment.glsl?raw";
+import vertexShader from "./shader/rotate/vertex.glsl?raw";
 
 const size = {
   width: window.innerWidth,
   height: window.innerHeight,
-  aspect: window.innerWidth / window.innerHeight,
+  pixelRatio: Math.min(2, window.devicePixelRatio),
 };
 
-const canvas = document.createElement("canvas");
-canvas.style.width = size.width + "px";
-canvas.style.height = size.height + "px";
-canvas.width = size.width;
-canvas.height = size.height;
-
 const el = document.querySelector("#root");
-el?.append(canvas);
 
-const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+const renderer = new WebGLRenderer({
+  alpha: true,
+  antialias: true,
+});
+renderer.setSize(size.width, size.height);
+renderer.setPixelRatio(size.pixelRatio);
+renderer.shadowMap.enabled = true;
+el?.append(renderer.domElement);
 
-function clean() {
-  ctx.save();
-  ctx.fillStyle = "#1e1e1e";
-  ctx.fillRect(0, 0, size.width, size.height);
-  ctx.restore();
-}
-clean();
+const scene = new Scene();
+scene.background = new Color("#1e1e1e");
 
-function point(p: Vector2) {
-  ctx.save();
-  const s = 10;
-  ctx.fillStyle = "#ffc53d";
-  ctx.fillRect(p.x - s / 2, p.y - s / 2, s, s);
-  ctx.restore();
-}
+const camera = new PerspectiveCamera(75, size.width / size.height, 0.1, 1000);
+camera.position.set(0, 0, 1);
+camera.lookAt(scene.position);
 
-function screen(p: Vector2) {
-  const x = ((p.x + 1.0) / 2.0) * size.width;
-  const y = -((p.y - 1.0) / 2.0) * size.height;
+/**
+ * World
+ */
 
-  return {
-    x,
-    y,
-  };
-}
+const uniforms = {
+  uRotate: new Uniform(0),
+};
 
-function project(p: Vector3) {
-  return {
-    x: p.x / p.z,
-    y: (p.y / p.z) * size.aspect,
-  };
-}
+const planeGeometry = new PlaneGeometry(1, 1, 16, 16);
+const planeMaterial = new ShaderMaterial({
+  vertexShader,
+  fragmentShader,
+  uniforms,
+});
+const plane = new Mesh(planeGeometry, planeMaterial);
+scene.add(plane);
 
-function translateZ(p: Vector3, dz: number) {
-  return {
-    x: p.x,
-    y: p.y,
-    z: p.z + dz,
-  };
-}
+const pane = new Pane({ title: "Debug Params" });
+pane.addBinding(uniforms.uRotate, "value", {
+  label: "rotate deg",
+  step: 0.001,
+  min: 0,
+  max: Math.PI * 2,
+});
 
-function line(from: Vector2, to: Vector2) {
-  ctx.save();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#ffc53d";
-  ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(to.x, to.y);
-  ctx.stroke();
-  ctx.restore();
-}
-
-function rotate(p: Vector3, angle: number) {
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
-
-  const x = p.x * c - p.z * s;
-  const z = p.x * s + p.z * c;
-
-  return {
-    x,
-    y: p.y,
-    z,
-  };
-}
-
-const _vs = vs ?? [
-  { x: 0.25, y: 0.25, z: 0.25 },
-  { x: -0.25, y: 0.25, z: 0.25 },
-  { x: -0.25, y: -0.25, z: 0.25 },
-  { x: 0.25, y: -0.25, z: 0.25 },
-
-  { x: 0.25, y: 0.25, z: -0.25 },
-  { x: -0.25, y: 0.25, z: -0.25 },
-  { x: -0.25, y: -0.25, z: -0.25 },
-  { x: 0.25, y: -0.25, z: -0.25 },
-];
-
-const _fs = fs ?? [
-  [0, 1, 2, 3],
-  [4, 5, 6, 7],
-  [0, 4],
-  [1, 5],
-  [2, 6],
-  [3, 7],
-];
-
-let prevTime = 0;
-let dt = 0;
-
-let dz = 1.5;
-let angle = 0;
-
-function render(time: number = 0) {
-  clean();
-
-  dt = (time - prevTime) / 1000;
-  prevTime = time;
-
-  // dz += dt;
-  angle += dt;
-
-  for (const v of _vs) {
-    // point(screen(project(translateZ(rotate(v, angle), dz))));
-  }
-
-  for (const f of _fs) {
-    for (let i = 0; i < f.length; i++) {
-      const a = _vs[f[i]];
-      const b = _vs[f[(i + 1) % f.length]];
-
-      line(
-        screen(project(translateZ(rotate(a, angle), dz))),
-        screen(project(translateZ(rotate(b, angle), dz)))
-      );
-    }
-  }
+function render() {
+  // Render
+  renderer.render(scene, camera);
 
   // Animation
   requestAnimationFrame(render);
