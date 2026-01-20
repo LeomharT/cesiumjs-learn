@@ -7,6 +7,7 @@
 
 import { sin } from "three/tsl";
 import "./canvas.css";
+import { fs, vs } from "./penger";
 
 type Vector2 = {
   x: number;
@@ -97,7 +98,7 @@ function rotate(p: Vector3, angle: number) {
   };
 }
 
-const _vs = [
+const _vs = vs ?? [
   { x: 0.25, y: 0.25, z: 0.25 },
   { x: -0.25, y: 0.25, z: 0.25 },
   { x: -0.25, y: -0.25, z: 0.25 },
@@ -109,7 +110,7 @@ const _vs = [
   { x: 0.25, y: -0.25, z: -0.25 },
 ];
 
-const _fs = [
+const _fs = fs ?? [
   [0, 1, 2, 3],
   [4, 5, 6, 7],
   [0, 4],
@@ -121,7 +122,7 @@ const _fs = [
 let prevTime = 0;
 let dt = 0;
 
-let dz = 1.0;
+let dz = 1.5;
 let angle = 0.0;
 
 function render(time: number = 0) {
@@ -133,10 +134,11 @@ function render(time: number = 0) {
 
   // dz += dt;
   angle += dt;
+  angle = angle % (Math.PI * 2);
 
   //Redner
   for (const v of _vs) {
-    point(screen(project(translateZ(rotate(v, angle), dz))));
+    // point(screen(project(translateZ(rotate(v, angle), dz))));
   }
 
   for (const f of _fs) {
