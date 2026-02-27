@@ -12,7 +12,7 @@ function random(min: number, max: number) {
   return Math.random() * (max - min) + min;
 }
 
-const positions = Array.from({ length: 50 }, () => ({
+const positions = Array.from({ length: 500 }, () => ({
   x: random(0, size.width),
   y: random(0, size.height),
   angle: random(0, Math.PI * 2),
@@ -20,18 +20,17 @@ const positions = Array.from({ length: 50 }, () => ({
 }));
 
 const colors = [
-  "#165A36",
-  "#1C6E42",
-  "#238551",
-  "#32A467",
-  "#72CA9B",
-  "#5642A6",
-  "#FFE39F",
-  "#ABC4A2",
-  "#6B9FA1",
-  "#3E769E",
-  "#1F4B99",
+  ...["#FFB7A5", "#E9947D", "#D17257", "#B85033", "#9E2B0E"],
+  ...["#FFC940", "#E9A133", "#D27B27", "#B9541A", "#9E2B0E"],
+  ...["#E1BAE1", "#BF93BE", "#9D6D9C", "#7C497B", "#5C255C"],
+  ...["#E8F8B6", "#A4D8A8", "#68B78C", "#399561", "#1D7324"],
+  ...["#B3CFFF", "#91ACE5", "#6F8ACB", "#4B6AB2", "#1F4B99"],
 ];
+
+const cursor = {
+  x: 0,
+  y: 0,
+};
 
 const canvas = document.createElement("canvas");
 canvas.width = size.width;
@@ -74,15 +73,24 @@ function renderGrassBlade() {
   ctx.restore();
 }
 
+function renderCursor(x: number, y: number) {
+  ctx.save();
+
+  ctx.fillStyle = "#F6F7F9";
+  ctx.beginPath();
+  ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 canvas.addEventListener("pointerdown", () => (isHoding = true));
 canvas.addEventListener("pointerup", () => (isHoding = false));
 canvas.addEventListener("pointermove", (e) => {
   if (!isHoding) return;
 
-  const cursor = {
-    x: e.clientX,
-    y: e.clientY,
-  };
+  cursor.x = e.clientX;
+  cursor.y = e.clientY;
 
   for (let i = 0; i < positions.length; i++) {
     const center = positions[i];
@@ -97,6 +105,7 @@ function render() {
   // Clean scene
   clear();
   renderGrassBlade();
+  renderCursor(cursor.x, cursor.y);
 
   // Animation
   requestAnimationFrame(render);
