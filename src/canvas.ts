@@ -55,12 +55,10 @@ function renderGrassBlade() {
   for (let i = 0; i < positions.length; i++) {
     const pos = positions[i];
 
-    const length = Math.sqrt(
-      Math.pow(pos.x - size.width / 2, 2) +
-        Math.pow(pos.y - size.height / 2, 2),
-    );
+    const dx = pos.x - size.width / 2;
+    const dy = pos.y - size.height / 2;
 
-    if (length < 500) continue;
+    if (dx * dx + dy * dy < 300 * 300) continue;
 
     ctx.save();
 
