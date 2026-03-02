@@ -97,7 +97,7 @@ canvas.addEventListener("pointermove", (e) => {
 
     const angle = Math.atan2(center.y - cursor.y, center.x - cursor.x);
 
-    positions[i].angle = angle + Math.PI / 2;
+    positions[i].angle = angle;
   }
 });
 
