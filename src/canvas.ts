@@ -1,6 +1,6 @@
 import { Colors } from "@blueprintjs/colors";
 import "./canvas.css";
-import { ConvexObjectBreaker } from "three/examples/jsm/Addons.js";
+
 const size = {
   width: window.innerWidth,
   height: window.innerHeight,
