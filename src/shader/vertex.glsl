@@ -14,6 +14,7 @@ vec2 rotate2D(vec2 p, float angle)
 }
 
 void main(){
+    // instance origin point
     vec4 instancePosition = modelMatrix * instanceMatrix * vec4(vec3(0.0), 1.0);
     vec3 viewDirection    = normalize(cameraPosition - instancePosition.xyz);
 

@@ -8,6 +8,7 @@ import {
   MathUtils,
   Object3D,
   PerspectiveCamera,
+  PlaneGeometry,
   Scene,
   ShaderMaterial,
   Uniform,
@@ -94,6 +95,9 @@ for (let i = 0; i < params.count; i++) {
 
 const axexHelper = new AxesHelper(1);
 scene.add(axexHelper);
+
+const mirrowGeometry = new PlaneGeometry(2, 2, 32, 32);
+const mirrowMaterial = new ShaderMaterial();
 
 function render() {
   // Update
