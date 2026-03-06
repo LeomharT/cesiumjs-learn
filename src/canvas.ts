@@ -1,106 +1,118 @@
 import { Colors } from "@blueprintjs/colors";
-import { MathUtils } from "three";
+import {
+  AxesHelper,
+  BufferAttribute,
+  BufferGeometry,
+  Color,
+  InstancedMesh,
+  MathUtils,
+  Object3D,
+  PerspectiveCamera,
+  Scene,
+  ShaderMaterial,
+  Uniform,
+  WebGLRenderer,
+} from "three";
+import { OrbitControls } from "three/examples/jsm/Addons.js";
 import "./canvas.css";
+import fragmentShader from "./shader/fragment.glsl?raw";
+import vertexShader from "./shader/vertex.glsl?raw";
 
 const size = {
   width: window.innerWidth,
   height: window.innerHeight,
+  pixelRatio: Math.min(2.0, window.devicePixelRatio),
 };
 
 const el = document.querySelector("#root");
 
-const canvas = document.createElement("canvas");
-canvas.width = size.width;
-canvas.height = size.height;
-canvas.style.width = size.width + "px";
-canvas.style.height = size.height + "px";
-el?.append(canvas);
+const renderer = new WebGLRenderer({
+  alpha: true,
+  antialias: true,
+});
+renderer.setSize(size.width, size.height);
+renderer.setPixelRatio(size.pixelRatio);
+el?.append(renderer.domElement);
 
-const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+const scene = new Scene();
+scene.background = new Color(Colors.BLACK);
 
-const cursor = {
-  x: 0,
-  y: 0,
+const camera = new PerspectiveCamera(75, size.width / size.height, 0.01, 1000);
+camera.position.set(0, 3, 3);
+camera.lookAt(scene.position);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+/**
+ * World
+ */
+
+const params = {
+  count: 10000,
 };
 
-function clean() {
-  ctx.save();
-  ctx.fillStyle = Colors.BLACK;
-  ctx.fillRect(0, 0, size.width, size.height);
-  ctx.restore();
+const positionArr = new Float32Array([
+  0.0, 1.0, 0.0,
+  //
+  -0.15, 0.0, 0.0,
+  //
+  0.15, 0.0, 0.0,
+]);
+const positionAttr = new BufferAttribute(positionArr, 3);
+
+const uvArr = new Float32Array([0.5, 1.0, 0.0, 0.0, 1.0, 0.0]);
+const uvAttr = new BufferAttribute(uvArr, 2);
+
+const grassGeometry = new BufferGeometry();
+grassGeometry.setAttribute("position", positionAttr);
+grassGeometry.setAttribute("uv", uvAttr);
+
+const grassMaterial = new ShaderMaterial({
+  vertexShader,
+  fragmentShader,
+  uniforms: {
+    uBleadColor: new Uniform(new Color(Colors.GREEN1)),
+    uTime: new Uniform(0),
+  },
+});
+const grass = new InstancedMesh(grassGeometry, grassMaterial, params.count);
+scene.add(grass);
+
+const instance = new Object3D();
+
+for (let i = 0; i < params.count; i++) {
+  instance.position.set(
+    MathUtils.randFloat(-5, 5),
+    0,
+    MathUtils.randFloat(-5, 5),
+  );
+  instance.updateMatrixWorld();
+
+  grass.setMatrixAt(i, instance.matrix);
 }
 
-function renderCursor() {
-  ctx.save();
-
-  ctx.beginPath();
-  ctx.fillStyle = Colors.TURQUOISE4;
-  ctx.arc(cursor.x, cursor.y, 20, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-const positions = Array.from({ length: 200 }, () => ({
-  x: MathUtils.randFloat(0, size.width),
-  y: MathUtils.randFloat(0, size.height),
-  length: MathUtils.randFloat(100, 200),
-  angle: 0,
-}));
-
-const colors = [
-  ...["#FFB7A5", "#E9947D", "#D17257", "#B85033", "#9E2B0E"],
-  ...["#FFB3D0", "#EB91AF", "#D56F90", "#BF4B72", "#A82255"],
-  ...["#E1BAE1", "#BF93BE", "#9D6D9C", "#7C497B", "#5C255C"],
-  ...["#D6CCFF", "#B7A8E8", "#9784D2", "#7763BC", "#5642A6"],
-  ...["#B3CFFF", "#91ACE5", "#6F8ACB", "#4B6AB2", "#1F4B99"],
-  ...["#97F3EB", "#78D5CC", "#58B8AE", "#369C91", "#008075"],
-  ...["#B1ECB5", "#8DCD8F", "#6AAE6A", "#469047", "#1D7324"],
-];
-
-function renderBlead() {
-  ctx.save();
-
-  for (let i = 0; i < positions.length; i++) {
-    ctx.save();
-    const p = positions[i];
-    const length = p.length / 2;
-
-    ctx.beginPath();
-    ctx.strokeStyle = colors[i % colors.length];
-    ctx.lineWidth = 3.0;
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.angle);
-    ctx.moveTo(-length, 0);
-    ctx.lineTo(length, 0);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  ctx.restore();
-}
+const axexHelper = new AxesHelper(1);
+scene.add(axexHelper);
 
 function render() {
-  // Clean canvas
-  clean();
-
+  // Update
+  controls.update();
+  grassMaterial.uniforms["uTime"].value += 0.1;
   // Render
-  renderBlead();
-  renderCursor();
-
+  renderer.render(scene, camera);
+  // Animation
   requestAnimationFrame(render);
 }
 render();
 
-canvas.addEventListener("pointermove", (e) => {
-  cursor.x = e.clientX;
-  cursor.y = e.clientY;
+function resize() {
+  size.width = window.innerWidth;
+  size.height = window.innerHeight;
 
-  for (let i = 0; i < positions.length; i++) {
-    const p = positions[i];
+  renderer.setSize(size.width, size.height);
 
-    const theta = Math.atan2(p.y - cursor.y, p.x - cursor.x);
-    positions[i].angle = theta + Math.PI / 2;
-  }
-});
+  camera.aspect = size.width / size.height;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", resize);
